@@ -28,11 +28,28 @@ def make_link_map(model_names, project_name):
     return link_map
 
 
+def tokenize_line(line):
+    tokens = []
+    for token in re.split(r'(<a.*>.*</a>)', line):
+        tokens.append(token)
+    return tokens
+
+
+def build_model_match_pattern(model_names):
+    sorted_by_length = sorted(model_names, key=lambda x: -1 * len(x))
+    return r'(' + r'|'.join(sorted_by_length) + ')'
+
+
 def insert_links_in_line(link_map, line):
-    for model_name, link in link_map.items():
-        alternate_name = model_name.replace('_', '.')
-        line = re.sub(model_name + '|' + alternate_name, link, line)
-    return line
+    tokens = tokenize_line(line)
+    new_line = ''
+    for token in tokens:
+        if not token.startswith('<a'):
+            for model_name, link in link_map.items():
+                alternate_name = model_name.replace('_', '.')
+                token = re.sub(model_name + '|' + alternate_name, link, token)
+        new_line += token
+    return new_line
 
 
 def get_dbt_project_path(absolute_path):

@@ -6,6 +6,8 @@ from linker_for_dbt_docs import (
     insert_links_in_line,
     make_link_map,
     get_dbt_project_path,
+    tokenize_line,
+    build_model_match_pattern,
 )
 
 
@@ -61,6 +63,36 @@ class TestInsertLinksInLine:
         expected = 'Lots of rows in <a href="#!/model/model.starfish.dim_problem_barnacles">dim.problem_barnacles</a>, <a href="#!/model/model.starfish.dim_problem_barnacles">dim.problem_barnacles</a>.'
 
         assert expected == insert_links_in_line(link_map, line)
+
+    def test_it_does_not_insert_link_inside_of_linke(self):
+        model_names = set(['raw_barnacles', 'dim_problem_barnacles'])
+        project_name = 'starfish'
+        link_map = make_link_map(model_names, project_name)
+        line = 'Lots of rows in <a href="#!/model/model.starfish.dim_problem_barnacles">dim.problem_barnacles</a>.'
+        assert line == insert_links_in_line(link_map, line)
+
+
+class TestTokenizeLine:
+    def test_it_returns_single_item_for_line_with_no_anchor_tags(self):
+        line = 'Lots of rows in dim.problem_barnacles, dim_problem_barnacles.'
+        assert [line] == tokenize_line(line)
+
+    def test_it_splits_line_by_anchor_tags(self):
+        line = 'Lots of rows in <a href="#!/model/model.starfish.dim_problem_barnacles">dim.problem_barnacles</a>.'
+        expected = [
+            'Lots of rows in ',
+            '<a href="#!/model/model.starfish.dim_problem_barnacles">dim.problem_barnacles</a>',
+            '.',
+        ]
+        assert expected == tokenize_line(line)
+
+
+class TestBuildModelMatchPattern:
+    def test_it(self):
+        model_names = set(['prob_barnacles', 'prob_barnacles_cleaned'])
+        expected = r'(prob_barnacles_cleaned|prob_barnacles)'
+
+        assert expected == build_model_match_pattern(model_names)
 
 
 class TestGetDBTProjectPath:

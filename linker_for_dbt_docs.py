@@ -25,6 +25,8 @@ def make_link_map(model_names, project_name):
     link_map = {}
     for model_name in model_names:
         link_map[model_name] = make_link(project_name, model_name)
+        alternate_name = model_name.replace('_', '.', 1)
+        link_map[alternate_name] = make_link(project_name, model_name)
     return link_map
 
 
@@ -40,16 +42,34 @@ def build_model_match_pattern(model_names):
     return r'(' + r'|'.join(sorted_by_length) + ')'
 
 
+def recursively_sub_anchors(finished_text, remaining_text, link_map, pattern):
+    if not remaining_text:
+        return finished_text
+    tokens = [t for t in tokenize_line(remaining_text) if t]
+
+    head, tail = tokens[0], tokens[1:]
+    remaining_text = ''.join(tail)
+
+    if head.startswith('<a'):
+        finished_text += head
+        return recursively_sub_anchors(finished_text, remaining_text, link_map, pattern)
+
+    match = re.search(pattern, head)
+    if match:
+        link = link_map[match.group(1)]
+        head = re.sub(match.group(1), link, head, 1)
+        tokens = re.split('(' + link + ')', head, 1)
+        finished_text += ''.join(tokens[:2])
+        remaining_text = ''.join(tokens[2:])
+        return recursively_sub_anchors(finished_text, remaining_text, link_map, pattern)
+    else:
+        finished_text += head
+        return recursively_sub_anchors(finished_text, remaining_text, link_map, pattern)
+
+
 def insert_links_in_line(link_map, line):
-    tokens = tokenize_line(line)
-    new_line = ''
-    for token in tokens:
-        if not token.startswith('<a'):
-            for model_name, link in link_map.items():
-                alternate_name = model_name.replace('_', '.')
-                token = re.sub(model_name + '|' + alternate_name, link, token)
-        new_line += token
-    return new_line
+    pattern = build_model_match_pattern(link_map.keys())
+    return recursively_sub_anchors('', line, link_map, pattern)
 
 
 def get_dbt_project_path(absolute_path):

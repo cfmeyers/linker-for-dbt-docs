@@ -61,15 +61,18 @@ class TestInsertLinksInLine:
         line = 'Lots of rows in dim.problem_barnacles, dim_problem_barnacles.'
 
         expected = 'Lots of rows in <a href="#!/model/model.starfish.dim_problem_barnacles">dim.problem_barnacles</a>, <a href="#!/model/model.starfish.dim_problem_barnacles">dim.problem_barnacles</a>.'
+        actual = insert_links_in_line(link_map, line)
 
-        assert expected == insert_links_in_line(link_map, line)
+        assert expected == actual
 
-    def test_it_does_not_insert_link_inside_of_linke(self):
+    def test_it_does_not_insert_link_inside_of_link(self):
         model_names = set(['raw_barnacles', 'dim_problem_barnacles'])
         project_name = 'starfish'
         link_map = make_link_map(model_names, project_name)
         line = 'Lots of rows in <a href="#!/model/model.starfish.dim_problem_barnacles">dim.problem_barnacles</a>.'
-        assert line == insert_links_in_line(link_map, line)
+
+        actual = insert_links_in_line(link_map, line)
+        assert line == actual
 
 
 class TestTokenizeLine:

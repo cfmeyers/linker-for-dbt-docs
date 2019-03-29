@@ -107,8 +107,9 @@ def re_write_file(absolute_path):
     with open(absolute_path) as f:
         for line in f:
             transformed_lines.append(insert_links_in_line(link_map, line))
-    for line in transformed_lines:
-        print(line)
+
+    with open(absolute_path, 'w') as f:
+        f.writelines(transformed_lines)
 
 
 if __name__ == '__main__':

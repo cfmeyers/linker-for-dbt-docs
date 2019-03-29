@@ -1,3 +1,4 @@
+import argparse
 import glob
 import os
 import re
@@ -34,5 +35,45 @@ def insert_links_in_line(link_map, line):
     return line
 
 
+def get_dbt_project_path(absolute_path):
+    parent_dir = os.path.abspath(os.path.join(absolute_path, os.pardir))
+    file_names = [f for f in glob.glob(parent_dir + "/dbt_project.yml", recursive=True)]
+    if file_names:
+        return parent_dir
+    else:
+        return get_dbt_project_path(parent_dir)
+
+
+def get_project_name(project_path):
+    return project_path.split('/')[-1]
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="Make anchor tags for your dbt docs")
+    parser.add_argument(
+        '-p',
+        '--path',
+        help="absolute path to file to be modified",
+        type=str,
+        required=True,
+    )
+    return parser.parse_args()
+
+
+def re_write_file(absolute_path):
+    project_path = get_dbt_project_path(absolute_path)
+    project_name = get_project_name(project_path)
+    model_names = collect_linkable_file_names(project_path)
+    link_map = make_link_map(model_names, project_name)
+
+    transformed_lines = []
+    with open(absolute_path) as f:
+        for line in f:
+            transformed_lines.append(insert_links_in_line(link_map, line))
+    for line in transformed_lines:
+        print(line)
+
+
 if __name__ == '__main__':
-    pass
+    path = parse_args().path
+    re_write_file(path)

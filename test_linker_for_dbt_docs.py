@@ -5,6 +5,7 @@ from linker_for_dbt_docs import (
     collect_linkable_file_names,
     insert_links_in_line,
     make_link_map,
+    get_dbt_project_path,
 )
 
 
@@ -60,3 +61,13 @@ class TestInsertLinksInLine:
         expected = 'Lots of rows in <a href="#!/model/model.starfish.dim_problem_barnacles">dim.problem_barnacles</a>, <a href="#!/model/model.starfish.dim_problem_barnacles">dim.problem_barnacles</a>.'
 
         assert expected == insert_links_in_line(link_map, line)
+
+
+class TestGetDBTProjectPath:
+    def test_it(self):
+        absolute_path = os.path.abspath(
+            'fixtures/starfish/models/transform/dim_problem_barnacles.md'
+        )
+        expected = os.path.abspath('fixtures/starfish')
+
+        assert expected == get_dbt_project_path(absolute_path)
